@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- The build is served from a public GitHub Pages origin. This does not make
+     anything private — the files are still fetchable — but it does keep the
+     page out of search results, which is the realistic exposure for a URL
+     nobody has been given. -->
+<meta name="robots" content="noindex,nofollow">
+<title>Health OS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0b0b0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Health OS">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<style>
+/* ---------------------------------------------------------------------------
+   A PHONE, HELD AT ARM'S LENGTH, IN A ROOM AT 06:40.
+
+   Every size in here is bigger than a desktop equivalent would be, and that is
+   the point: the last version of this was called out for dark grey on black at
+   nine pixels. Nothing that is prose is below 16px, instructions you follow
+   while moving are 18px, and every text colour clears 4.5:1 against the
+   surface it sits on. Checked, not eyeballed.
+
+   Layout is a fixed header, a scrolling body and a fixed tab bar, with
+   safe-area insets at both ends so nothing hides under the notch or the home
+   indicator. 100dvh rather than 100vh because Chrome on iOS changes the
+   viewport height as the address bar collapses, and 100vh does not notice.
+   --------------------------------------------------------------------------- */
+:root{
+  --bg:#0b0b0b;
+  --s1:#151515;          /* cards */
+  --s2:#1e1e1e;          /* raised things inside cards */
+  --s3:#272727;
+  --line:#2f2f2f;
+  --line-strong:#3d3d3d;
+  --text:#f4f4f4;        /* 17.8:1 */
+  --text-2:#cfcfcf;      /* 11.6:1 — body copy */
+  --text-3:#a4a4a4;      /*  7.0:1 — meta */
+  --accent:#ff8a3d;      /*  8.2:1 */
+  --accent-dim:rgba(255,138,61,.14);
+  --good:#5ec97a;
+  --warn:#ffd24a;
+  --alert:#ff6b5e;
+  --r:14px;
+  --pad:16px;
+  font-size:17px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  font-size:17px;line-height:1.5;overscroll-behavior-y:none}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+/* ------------------------------------------------------------------ header */
+#top{flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 10px) var(--pad) 0;
+  background:linear-gradient(180deg,#111 0%,#0d0d0d 100%);border-bottom:1px solid var(--line)}
+#hdrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+#dayname{font-size:26px;font-weight:650;letter-spacing:-.02em}
+#datesub{font-size:14px;color:var(--text-3)}
+#strip{display:flex;gap:6px;margin:12px 0 10px;overflow-x:auto;scrollbar-width:none}
+#strip::-webkit-scrollbar{display:none}
+.dbtn{flex:1 0 auto;min-width:44px;padding:7px 0 8px;border-radius:11px;text-align:center;
+  background:var(--s1);border:1px solid var(--line)}
+.dbtn .l{font-size:12px;color:var(--text-3);letter-spacing:.06em}
+.dbtn .n{font-size:17px;font-weight:600;margin-top:1px}
+.dbtn .t{font-size:11px;font-weight:700;margin-top:3px;color:var(--accent);letter-spacing:.04em;height:13px}
+.dbtn.today{background:var(--accent-dim);border-color:var(--accent)}
+.dbtn.sel{border-color:var(--text);background:var(--s3)}
+
+/* -------------------------------------------------------------------- body */
+#scroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:14px var(--pad) 28px;overscroll-behavior-y:contain}
+section{margin:0 0 18px}
+h2{font-size:13px;letter-spacing:.10em;text-transform:uppercase;color:var(--text-3);
+  margin:0 0 9px;font-weight:600}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.card + .card{margin-top:10px}
+.cpad{padding:15px 16px}
+.hair{border-top:1px solid var(--line)}
+
+/* headline */
+#headline{padding:17px 16px;border-radius:var(--r);background:var(--s1);border:1px solid var(--line)}
+#headline.gym{border-color:var(--accent);background:linear-gradient(180deg,rgba(255,138,61,.10),var(--s1))}
+#headline .t{font-size:22px;font-weight:650;letter-spacing:-.01em;line-height:1.28}
+#headline .s{font-size:16px;color:var(--text-2);margin-top:7px}
+#headline .w{font-size:13px;color:var(--text-3);margin-top:11px;letter-spacing:.03em}
+
+/* the now strip */
+#now{display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:var(--r);
+  background:var(--s2);border:1px solid var(--line-strong);margin-bottom:18px}
+#now .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+#now .txt{font-size:16px;line-height:1.4}
+#now .txt b{font-weight:650}
+#now.past .dot{background:var(--text-3)}
+#now.alert .dot{background:var(--alert)}
+
+/* rows */
+.row{display:flex;align-items:flex-start;gap:13px;padding:14px 16px;width:100%;text-align:left}
+.row + .row{border-top:1px solid var(--line)}
+.tick{flex:0 0 auto;width:27px;height:27px;border-radius:9px;border:1.5px solid var(--line-strong);
+  display:flex;align-items:center;justify-content:center;margin-top:1px;background:var(--bg)}
+.tick svg{width:15px;height:15px;stroke:var(--bg);stroke-width:3;fill:none;opacity:0}
+.tick.on{background:var(--good);border-color:var(--good)}
+.tick.on svg{opacity:1}
+.rmain{flex:1 1 auto;min-width:0}
+.rtitle{font-size:17px;font-weight:550;line-height:1.32}
+.rdose{font-size:15px;color:var(--accent);margin-top:3px;font-variant-numeric:tabular-nums}
+.rnote{font-size:15px;color:var(--text-2);margin-top:6px;line-height:1.45}
+.rtime{font-size:14px;color:var(--text-3);margin-top:3px}
+.done .rtitle{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--text-3)}
+.play{flex:0 0 auto;width:40px;height:40px;border-radius:11px;background:var(--s3);
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line-strong)}
+.play svg{width:15px;height:15px;fill:var(--accent)}
+.tag{display:inline-block;font-size:12px;font-weight:650;letter-spacing:.05em;padding:3px 7px;
+  border-radius:6px;background:var(--accent-dim);color:var(--accent);margin-left:7px;vertical-align:2px}
+.tag.knee{background:rgba(255,107,94,.15);color:var(--alert)}
+
+/* prose */
+.prose{font-size:16px;color:var(--text-2);line-height:1.55}
+.prose.big{font-size:18px;line-height:1.58;color:var(--text)}
+.prose p{margin:0 0 11px}.prose p:last-child{margin:0}
+.prose b,.prose strong{color:var(--text);font-weight:600}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding:0 0 0 34px;margin:0 0 14px;
+  font-size:18px;line-height:1.5;color:var(--text)}
+ol.steps li:last-child{margin:0}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:24px;height:24px;
+  border-radius:8px;background:var(--s3);color:var(--accent);font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace}
+ul.plain{margin:0;padding:0 0 0 20px}
+ul.plain li{margin:0 0 9px;font-size:16px;color:var(--text-2);line-height:1.5}
+.look{padding:14px 16px}
+.look + .look{border-top:1px solid var(--line)}
+.look .sg{font-size:17px;font-weight:600;line-height:1.35}
+.look .hw{font-size:16px;color:var(--text-2);margin-top:7px;line-height:1.5}
+.look .hw::before{content:"How to see it  ";font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.look .mn{font-size:16px;color:var(--text-2);margin-top:7px;line-height:1.5}
+.look .mn::before{content:"What it means  ";font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);font-weight:700}
+.kvrow{display:flex;justify-content:space-between;gap:14px;padding:12px 16px;font-size:16px}
+.kvrow + .kvrow{border-top:1px solid var(--line)}
+.kvrow b{font-weight:450;color:var(--text-3)}
+.kvrow span{text-align:right;color:var(--text)}
+details{border-top:1px solid var(--line)}
+details summary{padding:14px 16px;font-size:16px;font-weight:550;list-style:none;display:flex;
+  justify-content:space-between;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"+";color:var(--accent);font-size:21px;line-height:1}
+details[open] summary::after{content:"\2013"}
+details .body{padding:0 16px 16px}
+
+/* ---------------------------------------------------------------- tab bar */
+#tabs{flex:0 0 auto;display:flex;border-top:1px solid var(--line);background:#101010;
+  padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;padding:11px 0 10px;text-align:center;font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-3);font-weight:600}
+.tab svg{display:block;margin:0 auto 3px;width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tab.on{color:var(--accent)}
+
+/* ---------------------------------------------------------------- library */
+#search{width:100%;font-size:16px;padding:12px 14px;border-radius:11px;background:var(--s1);
+  border:1px solid var(--line);color:var(--text);outline:none;margin-bottom:11px}
+#search:focus{border-color:var(--accent)}
+#cats{display:flex;gap:7px;overflow-x:auto;margin-bottom:13px;scrollbar-width:none;padding-bottom:2px}
+#cats::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:8px 14px;border-radius:20px;background:var(--s1);border:1px solid var(--line);
+  font-size:14px;color:var(--text-2);white-space:nowrap}
+.chip.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:600}
+
+/* ----------------------------------------------------------------- player */
+#player{position:fixed;inset:0;background:var(--bg);z-index:90;display:flex;flex-direction:column}
+#pbar{flex:0 0 auto;display:flex;align-items:center;gap:12px;
+  padding:calc(env(safe-area-inset-top) + 9px) 14px 9px;border-bottom:1px solid var(--line);background:#101010}
+#pname{flex:1 1 auto;font-size:18px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pclose{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:var(--s2);font-size:21px;
+  display:flex;align-items:center;justify-content:center;color:var(--text-2)}
+#stage{flex:0 0 auto;position:relative;height:42dvh;min-height:230px;background:#0a0a0a;touch-action:none}
+#cv{width:100%;height:100%;display:block}
+#plabel{position:absolute;left:12px;top:10px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--accent);font-weight:700;pointer-events:none;text-shadow:0 1px 4px #000}
+#phint{position:absolute;right:12px;top:11px;font-size:12px;color:var(--text-3);pointer-events:none}
+#transport{flex:0 0 auto;padding:11px 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#101010}
+#trow{display:flex;align-items:center;gap:12px}
+#pplay{width:46px;height:46px;border-radius:14px;background:var(--accent);display:flex;
+  align-items:center;justify-content:center;flex:0 0 auto}
+#pplay svg{width:18px;height:18px;fill:#0b0b0b}
+#scrub{flex:1 1 auto;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;
+  background:var(--s3);outline:none;margin:0}
+#scrub::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+.tbtn{flex:0 0 auto;padding:9px 12px;border-radius:10px;background:var(--s2);border:1px solid var(--line);
+  font-size:14px;color:var(--text-2)}
+.tbtn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:600}
+#pscroll{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:15px 14px 30px;overscroll-behavior-y:contain}
+#pcue{padding:15px 16px;border-radius:var(--r);background:var(--accent-dim);border:1px solid rgba(255,138,61,.35);
+  font-size:18px;line-height:1.5;color:#ffd9bd;margin-bottom:16px}
+#pcue b{color:var(--accent);display:block;font-size:12px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:6px}
+.psec{margin-bottom:16px}
+.psec h3{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);margin:0 0 9px;font-weight:600}
+.warn{border-color:rgba(255,107,94,.4)!important;background:rgba(255,107,94,.08)}
+.warn h3{color:var(--alert)}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 78px);transform:translateX(-50%);
+  padding:11px 18px;border-radius:11px;background:var(--s3);border:1px solid var(--line-strong);font-size:15px;
+  opacity:0;transition:opacity .22s;pointer-events:none;z-index:120;max-width:82%;text-align:center}
+
+/* --------------------------------------------------------------- schedule
+   ONE LIST, WAKE TO SLEEP. The timeline is a three-column grid — time, a
+   tick or a kind-dot, then the block — with a hairline running down behind
+   the dots so the day reads as one continuous thing rather than a stack of
+   unrelated cards. That line is the entire reason this looks like a schedule
+   and not like a list. */
+.timeline{position:relative;margin:0 0 18px}
+.timeline::before{content:"";position:absolute;left:63px;top:10px;bottom:10px;
+  width:1px;background:var(--line);z-index:0}
+.block{position:relative;z-index:1;display:grid;grid-template-columns:48px 26px 1fr;
+  gap:0 11px;align-items:start;padding:13px 16px 13px 0}
+.block + .block{border-top:1px solid var(--line)}
+.block.done .bmain{opacity:.45}
+.block.done .btitle{text-decoration:line-through;text-decoration-color:var(--text-3)}
+/* the block you are actually in, right now */
+.block.now{background:var(--s1);border-radius:var(--r)}
+.block.now .btime{color:var(--accent)}
+.btime{font-size:14px;color:var(--text-3);padding-top:2px;text-align:right;letter-spacing:.01em}
+.block.now .btime{font-weight:700}
+.dotcol{display:flex;justify-content:center;padding-top:6px}
+.blockdot{width:9px;height:9px;border-radius:50%;background:var(--s3);
+  border:1px solid var(--line-strong);flex:none}
+.blockdot.k-wake{background:var(--accent);border-color:var(--accent)}
+.blockdot.k-sleep,.blockdot.k-wind{background:#4b6ea8;border-color:#4b6ea8}
+.blockdot.k-family{background:#7a5ea8;border-color:#7a5ea8}
+.bmain{min-width:0}
+.bhead{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+.btitle{font-size:17px;font-weight:550;line-height:1.32;min-width:0}
+/* the tick sits in the dot column, so it has to match its width exactly */
+.block .tick{margin-top:1px}
+.kcal{flex:none;font-size:14px;font-weight:650;padding:2px 7px;border-radius:7px;
+  letter-spacing:.01em}
+.kcal.in{color:#7fc79a;background:rgba(127,199,154,.12)}
+.kcal.out{color:var(--accent);background:rgba(255,138,61,.12)}
+/* exercises belong INSIDE the block they happen in */
+.subrows{margin:10px 0 0;border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;background:var(--s1)}
+.subrows .row{padding:11px 13px}
+
+/* the day's arithmetic, stated above the day that produces it */
+.ledger{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:0 0 7px}
+.lcell{background:var(--s1);padding:10px 8px;text-align:center}
+.lk{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+.lv{font-size:19px;font-weight:650;margin-top:3px}
+.lv.in{color:#7fc79a}.lv.out{color:var(--accent)}.lv.warn{color:var(--alert)}
+.lnote{font-size:14px;color:var(--text-3);line-height:1.45;margin:0 2px 18px}
+
+/* ------------------------------------------------------------- projection */
+.ptable{padding:4px 0 6px}
+.prow{display:grid;grid-template-columns:1.15fr 1fr 1fr .95fr .7fr;gap:6px;
+  padding:7px 14px;align-items:baseline}
+.prow.phead .pv,.prow.phead .ph{font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-3)}
+.ph{font-size:14px;color:var(--text-2)}
+.pv{font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
+.pv.good{color:#7fc79a}
+.pv.warn{color:var(--alert)}
+.tag.key{background:rgba(255,138,61,.15);color:var(--accent)}
+
+/* ------------------------------------------------------------------ punts
+   Two taps, thumb-sized, at the bottom of the session block. 44px minimum
+   because that is the smallest reliable touch target on iOS and this gets
+   used at 06:05 with one hand. */
+.punt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 2px}
+.puntlab{font-size:14px;color:var(--text-3);width:100%}
+.puntb{min-height:44px;padding:11px 16px;border-radius:11px;background:var(--s2);
+  border:1px solid var(--line-strong);color:var(--text);font-size:15px;font-weight:600;
+  -webkit-tap-highlight-color:transparent}
+.puntb:active{background:var(--s3)}
+.puntb.undo{background:transparent;color:var(--accent);border-color:var(--accent)}
+.puntnow{width:100%;padding:11px 13px;border-radius:11px;background:rgba(255,138,61,.10);
+  border:1px solid rgba(255,138,61,.30)}
+.pn1{font-size:15px;font-weight:650;color:var(--accent)}
+.pn2{font-size:14px;color:var(--text-2);margin-top:4px;line-height:1.45}
+.puntwhy{width:100%;font-size:14px;color:var(--text-3);line-height:1.45}
+
+/* ------------------------------------------------------------------- gate
+   A CURTAIN, NOT A LOCK, and it is worth being honest about that in the place
+   somebody will read it. The files behind this are served publicly; anybody
+   who requests /daydata.js gets the numbers without ever seeing this screen.
+   What it stops is a person who opens the URL. That is all it stops, and it
+   is all it is here to do.
+
+   The passphrase is never in the source — only a SHA-256 of it — so "view
+   source" does not hand it over. Unlocking is remembered on the device so the
+   gym is not the place you are typing a passphrase one-handed. */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:28px;
+  padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+#gate[hidden]{display:none}
+#gate .gt{font-size:21px;font-weight:650;letter-spacing:-.01em}
+#gate .gs{font-size:15px;color:var(--text-3);text-align:center;max-width:31ch;line-height:1.5}
+#gate input{width:100%;max-width:290px;min-height:52px;padding:14px 16px;border-radius:13px;
+  background:var(--s2);border:1px solid var(--line-strong);color:var(--text);
+  font-size:17px;text-align:center;letter-spacing:.18em}
+#gate input:focus{outline:none;border-color:var(--accent)}
+#gate button{min-height:52px;width:100%;max-width:290px;border-radius:13px;background:var(--accent);
+  color:#151515;font-size:17px;font-weight:700;-webkit-tap-highlight-color:transparent}
+#gate .gerr{font-size:15px;color:var(--alert);min-height:20px}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div id="hdrow">
+    <div>
+      <div id="dayname">—</div>
+      <div id="datesub">—</div>
+    </div>
+    <button id="travel" class="tbtn">Travel</button>
+  </div>
+  <div id="strip"></div>
+</header>
+
+<main id="scroll"></main>
+
+<nav id="tabs">
+  <button class="tab on" data-tab="schedule">
+    <svg viewBox="0 0 24 24"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>Schedule</button>
+  <button class="tab" data-tab="library">
+    <svg viewBox="0 0 24 24"><path d="M5 4h6v16H5zM13 4h6v16h-6zM7 8h2M15 8h2"/></svg>Movements</button>
+  <button class="tab" data-tab="plan">
+    <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16V9M12 16v-4M16 16v-9"/></svg>Plan &amp; goals</button>
+</nav>
+
+<div id="gate" hidden>
+  <div class="gt">Health OS</div>
+  <div class="gs">Enter the passphrase to open this on this device. It is remembered afterwards.</div>
+  <input id="gpin" type="password" inputmode="text" autocomplete="current-password"
+    autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="passphrase">
+  <button id="gok">Open</button>
+  <div class="gerr" id="gerr"></div>
+</div>
+
+<script>
+/* Runs BEFORE the app module, as a classic script, so there is no window in
+ * which the schedule is on screen unblurred. 0fb69008d1c936bddf18bde9acfdd990e1d3e846bf66cc37f89af172255c67e8 is substituted by
+ * build_mobile.mjs; when it is left unsubstituted — which is exactly the case
+ * when serving the repo locally with server.py — there is no gate at all, and
+ * local development is untouched. */
+(function () {
+  var HASH = '0fb69008d1c936bddf18bde9acfdd990e1d3e846bf66cc37f89af172255c67e8';
+  var KEY = 'pt.gate.ok';
+  if (HASH.indexOf('GATE_HASH') !== -1) return;        // local dev: no gate
+
+  var gate = document.getElementById('gate');
+  var pin = document.getElementById('gpin');
+  var err = document.getElementById('gerr');
+
+  try { if (localStorage.getItem(KEY) === HASH) return; } catch (e) { /* private mode */ }
+
+  gate.hidden = false;
+  document.documentElement.style.overflow = 'hidden';
+  setTimeout(function () { pin.focus(); }, 120);
+
+  function sha256(str) {
+    var enc = new TextEncoder().encode(str);
+    return crypto.subtle.digest('SHA-256', enc).then(function (buf) {
+      return [].map.call(new Uint8Array(buf), function (b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+    });
+  }
+
+  function attempt() {
+    var v = pin.value;
+    if (!v) return;
+    sha256(v).then(function (h) {
+      if (h !== HASH) { err.textContent = 'Not that one.'; pin.value = ''; pin.focus(); return; }
+      try { localStorage.setItem(KEY, HASH); } catch (e) { /* fine, asks again */ }
+      gate.hidden = true;
+      document.documentElement.style.overflow = '';
+    }).catch(function () {
+      /* crypto.subtle is unavailable on insecure origins. Say so rather than
+       * failing silently into a page that will not open. */
+      err.textContent = 'Needs https to check that.';
+    });
+  }
+
+  document.getElementById('gok').addEventListener('click', attempt);
+  pin.addEventListener('keydown', function (e) { if (e.key === 'Enter') attempt(); });
+})();
+</script>
+
+<div id="player" hidden>
+  <div id="pbar">
+    <div id="pname">—</div>
+    <button id="pclose">&times;</button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="plabel"></div>
+    <div id="phint">drag to turn</div>
+  </div>
+  <div id="transport">
+    <div id="trow">
+      <button id="pplay"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></button>
+      <input id="scrub" type="range" min="0" max="1000" value="0">
+      <button id="pmirror" class="tbtn">L</button>
+      <button id="pslow" class="tbtn">1&times;</button>
+    </div>
+  </div>
+  <div id="pscroll"></div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="day.js"></script>
+</body>
+</html>
